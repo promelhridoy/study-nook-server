@@ -44,12 +44,28 @@ async function run() {
       res.json(result);
     });
 
+    app.patch("/rooms/:id", async (req, res) => {
+      const { id } = req.params;
+      const updatedData = req.body;
+      console.log(updatedData);
+
+      const result = await studyNookCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updatedData },
+      );
+
+      res.json(result);
+    });
+
+
     app.post('/rooms', async (req, res) => {
         const studyNookData = req.body;
         console.log(studyNookData);
         const result = await studyNookCollection.insertOne(studyNookData);
         res.send(result);
     })
+
+
 
 
 
