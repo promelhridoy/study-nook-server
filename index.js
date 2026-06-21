@@ -28,6 +28,7 @@ async function run() {
 
     const db = client.db("study-nook");
     const studyNookCollection = db.collection("rooms");
+    const bookingCollection = db.collection("bookings")
 
     app.get('/rooms', async (req, res) => {
       const result = await studyNookCollection.find().toArray();
@@ -62,7 +63,7 @@ async function run() {
         const studyNookData = req.body;
         console.log(studyNookData);
         const result = await studyNookCollection.insertOne(studyNookData);
-        res.send(result);
+        res.json(result);
     })
 
 
@@ -75,12 +76,18 @@ async function run() {
     });
 
 
+    app.post('/bookings', async (req, res) => {
+      const bookingData = req.body;
+      console.log(bookingData);
+      const result = await bookingCollection.insertOne(bookingData);
+      res.json(result);
+    });
 
-
-
-
-
-
+    app.get('/bookings/:userId', async (req, res) => {
+      const { userId } = req.params;
+      const result = await bookingCollection.find({ userId: userId }).toArray();
+      res.json(result);
+    });
 
 
 
