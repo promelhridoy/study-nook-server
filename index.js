@@ -66,6 +66,13 @@ async function run() {
     })
 
 
+    app.delete("/rooms/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await studyNookCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.json(result);
+    });
 
 
 
