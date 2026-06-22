@@ -35,7 +35,14 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/rooms/:id", async (req, res) => {
+    app.get("/rooms/:id", (req, res, next) => {
+      const header = req.headers.authorization;
+      if(header === "signed in") {
+        next();
+      } else {
+        res.status(401).json({ error: "Unauthorized" });
+      }
+    }, async (req, res) => {
       const { id } = req.params;
 
       const result = await studyNookCollection.
