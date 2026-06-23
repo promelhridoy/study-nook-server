@@ -82,14 +82,14 @@ async function run() {
     }
 
     // Floor filter
-    if (floor && floor !== "all") {
-      query.floor = Number(floor);
-    }
+if (floor && floor !== "all") {
+  query.floor = floor;
+}
 
-    // Capacity filter
-    if (capacity && capacity !== "all") {
-      query.capacity = Number(capacity);
-    }
+// Capacity filter
+if (capacity && capacity !== "all") {
+  query.capacity = capacity;
+}
 
     const result = await studyNookCollection
       .find(query)
