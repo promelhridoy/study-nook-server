@@ -62,7 +62,7 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/rooms/:id", verifyToken, async (req, res) => {
+    app.get("/rooms/:id", async (req, res) => {
       const { id } = req.params;
 
       const result = await studyNookCollection.
