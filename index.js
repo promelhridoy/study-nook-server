@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify} = require('jose-cjs');
 dotenv.config();
 
 const uri = process.env.MONGODB_URI;
@@ -9,7 +10,7 @@ const uri = process.env.MONGODB_URI;
 const app = express()
 
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 app.use(cors())
 app.use(express.json())
 
@@ -21,10 +22,36 @@ const client = new MongoClient(uri, {
   }
 });
 
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
+)
+
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req?.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+ 
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    console.log(payload);
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+  
+};
+
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const db = client.db("study-nook");
     const studyNookCollection = db.collection("rooms");
@@ -35,14 +62,7 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/rooms/:id", (req, res, next) => {
-      const header = req.headers.authorization;
-      if(header === "signed in") {
-        next();
-      } else {
-        res.status(401).json({ error: "Unauthorized" });
-      }
-    }, async (req, res) => {
+    app.get("/rooms/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
       const result = await studyNookCollection.
@@ -52,7 +72,7 @@ async function run() {
       res.json(result);
     });
 
-    app.patch("/rooms/:id", async (req, res) => {
+    app.patch("/rooms/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const updatedData = req.body;
       console.log(updatedData);
@@ -66,7 +86,7 @@ async function run() {
     });
 
 
-    app.post('/rooms', async (req, res) => {
+    app.post('/rooms', verifyToken, async (req, res) => {
         const studyNookData = req.body;
         console.log(studyNookData);
         const result = await studyNookCollection.insertOne(studyNookData);
@@ -74,7 +94,7 @@ async function run() {
     })
 
 
-    app.delete("/rooms/:id", async (req, res) => {
+    app.delete("/rooms/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const result = await studyNookCollection.deleteOne({
         _id: new ObjectId(id),
@@ -83,27 +103,27 @@ async function run() {
     });
 
 
-    app.post('/bookings', async (req, res) => {
+    app.post('/bookings', verifyToken, async (req, res) => {
       const bookingData = req.body;
       console.log(bookingData);
       const result = await bookingCollection.insertOne(bookingData);
       res.json(result);
     });
 
-    app.get('/bookings/:userId', async (req, res) => {
+    app.get('/bookings/:userId', verifyToken, async (req, res) => {
       const { userId } = req.params;
       const result = await bookingCollection.find({ userId: userId }).toArray();
       res.json(result);
     });
 
-    app.delete('/booking/:bookingId', async (req, res) => {
+    app.delete('/booking/:bookingId', verifyToken , async (req, res) => {
       const {bookingId} = req.params;
       const result = await bookingCollection.deleteOne({_id: new ObjectId(bookingId)})
 
       res.json(result)
     })
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
