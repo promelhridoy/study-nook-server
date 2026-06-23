@@ -57,10 +57,51 @@ async function run() {
     const studyNookCollection = db.collection("rooms");
     const bookingCollection = db.collection("bookings")
 
-    app.get('/rooms', async (req, res) => {
-      const result = await studyNookCollection.find().toArray();
-      res.json(result);
+    app.get("/rooms", async (req, res) => {
+  try {
+    const {
+      search,
+      badge,
+      floor,
+      capacity,
+    } = req.query;
+
+    const query = {};
+
+    // Search by room name
+    if (search) {
+      query.name = {
+        $regex: search,
+        $options: "i",
+      };
+    }
+
+    // Badge filter
+    if (badge && badge !== "all") {
+      query.badge = badge;
+    }
+
+    // Floor filter
+    if (floor && floor !== "all") {
+      query.floor = Number(floor);
+    }
+
+    // Capacity filter
+    if (capacity && capacity !== "all") {
+      query.capacity = Number(capacity);
+    }
+
+    const result = await studyNookCollection
+      .find(query)
+      .toArray();
+
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({
+      message: error.message,
     });
+  }
+});
 
     app.get("/rooms/:id", async (req, res) => {
       const { id } = req.params;
