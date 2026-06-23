@@ -57,18 +57,20 @@ async function run() {
     const studyNookCollection = db.collection("rooms");
     const bookingCollection = db.collection("bookings")
 
-    app.get("/rooms", async (req, res) => {
+   app.get("/rooms", async (req, res) => {
   try {
     const {
       search,
       badge,
       floor,
       capacity,
+      amenities,
+      minPrice,
+      maxPrice,
     } = req.query;
 
     const query = {};
 
-    // Search by room name
     if (search) {
       query.name = {
         $regex: search,
@@ -76,24 +78,37 @@ async function run() {
       };
     }
 
-    // Badge filter
     if (badge && badge !== "all") {
       query.badge = badge;
     }
 
-    // Floor filter
-if (floor && floor !== "all") {
-  query.floor = floor;
-}
+    if (floor && floor !== "all") {
+      query.floor = floor;
+    }
 
-// Capacity filter
-if (capacity && capacity !== "all") {
-  query.capacity = capacity;
-}
+    if (capacity && capacity !== "all") {
+      query.capacity = capacity;
+    }
 
-    const result = await studyNookCollection
-      .find(query)
-      .toArray();
+    if (amenities) {
+      query.amenities = {
+        $in: amenities.split(","),
+      };
+    }
+
+    if (minPrice || maxPrice) {
+      query.hourlyRate = {};
+
+      if (minPrice) {
+        query.hourlyRate.$gte = Number(minPrice);
+      }
+
+      if (maxPrice) {
+        query.hourlyRate.$lte = Number(maxPrice);
+      }
+    }
+
+    const result = await studyNookCollection.find(query).toArray();
 
     res.send(result);
   } catch (error) {
