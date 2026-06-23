@@ -1,6 +1,6 @@
 # 🏫 Study Nook - Server
 
-Live API: https://study-nook-kappa.vercel.app
+Live API: https://study-nook-server-murex.vercel.app/rooms
 
 This is the backend server for the **Study Nook** project.  
 It provides REST APIs for room management, booking system, authentication, and advanced filtering using MongoDB.
